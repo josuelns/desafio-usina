@@ -3,20 +3,23 @@
     /** 将代码编译为最新版本的 JS */
     "target": "ESNext",
     /** 引入 ES 最新特性和 DOM 接口的类型定义 */
-    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+    ],
     /** 使用 ES Module 格式打包编译后的文件 */
     "module": "ESNext",
     /** 跳过对 .d.ts 文件的类型检查 */
     "skipLibCheck": true,
     /** 查询的基础路径 */
     "baseUrl": ".",
-    /** 路径映射,配合别名使用 */
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
-
     /* Bundler mode */
-
     /** 使用 Bundler（如 Vite、Webpack）解析模块 */
     "moduleResolution": "Bundler",
     /** 允许在模块导入语句中使用Typescript文件的扩展名（.ts） */
@@ -33,9 +36,7 @@
     "jsx": "react-jsx",
     /** 允许使用 import 引入使用 export 导出 */
     "esModuleInterop": true,
-
     /* Linting */
-
     /** 开启所有严格的类型检查 */
     "strict": true,
     /** 不允许对同一个文件使用不一致格式的引用 */
@@ -48,7 +49,9 @@
     "noFallthroughCasesInSwitch": true
   },
   /** 需要检测的文件 */
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   /** 为文件进行不同配置 */
   "references": [
     {

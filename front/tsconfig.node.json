@@ -9,8 +9,16 @@
     /** 使用 Bundler（如 Vite、Webpack）解析模块 */
     "moduleResolution": "Bundler",
     /** 允许从没有默认导出的模块中进行默认导入，方便处理不符合 ES 标准的模块 */
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
   },
   /** 指定要包含在编译过程中的文件或目录 */
-  "include": ["vite.config.ts"]
+  "include": [
+    "vite.config.ts"
+  ]
 }
