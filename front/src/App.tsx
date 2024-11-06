@@ -4,7 +4,7 @@ import './global.css';
 import { ArrowUp, ChevronLeft, ChevronRight, Filter, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -505,20 +505,25 @@ const App = () => {
       </div>
 
 
+      <AnimatePresence>
+        {isVisible && (
+          <motion.button
+            onClick={scrollToTop}
+            className="fixed bottom-4 right-4 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition-colors duration-300"
+            aria-label="Scroll to top"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{
+              opacity: { duration: 0.6, ease: "easeInOut" },
+              scale: { duration: 0.4, ease: "easeOut" },
+            }}
+          >
+            <ArrowUp className="w-5 h-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
-
-      {isVisible && (
-        <motion.button
-          onClick={scrollToTop}
-          className="fixed bottom-4 right-4 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700 transition duration-300"
-          aria-label="Scroll to top"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <ArrowUp className="w-5 h-5" />
-        </motion.button>
-      )}
 
       <div className='border-t-[1px] text-center mt-12 py-8 border-gray-700'>
         Desenvolvido por Josue Leandro Navarro Ribeiro
