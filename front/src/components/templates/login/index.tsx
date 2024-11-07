@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubmitHandler } from 'react-hook-form'; // Importando useForm do React Hook Form
+import { SubmitHandler, useForm } from 'react-hook-form'; // Importando useForm do React Hook Form
 import {
     Dialog,
     DialogContent,
@@ -25,34 +25,159 @@ interface RegisterFormData {
     confirmPassword: string;
 }
 
-export const LoginDialog = ({ isOpen, onClose }: any) => {
-    const [isRegistering, setIsRegistering] = React.useState(false); // Controle para alternar entre login e registro
-    const { login, register, handleSubmit, errors } = useAuthContext(); // Consumindo o contexto de autenticação
+const LoginForm = ({ onClose }: any) => {
+    const { login, handleSubmit, errors, register } = useAuthContext(); // Consumindo o contexto de autenticação
 
     const handleLogin: SubmitHandler<LoginFormData> = async (data) => {
         await login(data.email, data.password); // Usando a função de login do contexto
         onClose(); // Fechar o modal após o login
     };
 
-    const handleRegister: SubmitHandler<RegisterFormData> = (data) => {
+    return (
+        <form onSubmit={handleSubmit(handleLogin)} className="space-y-4">
+            <div className="grid flex-1 gap-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    placeholder="seu.email@exemplo.com"
+                    {...register('email', {
+                        required: 'O email é obrigatório',
+                        pattern: {
+                            value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+                            message: 'Email inválido',
+                        },
+                    })}
+                />
+                {errors.email && <span className="text-red-500">{errors.email.message}</span>}
+            </div>
+            <div className="grid flex-1 gap-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    placeholder="Sua senha"
+                    {...register('password', { required: 'A senha é obrigatória' })}
+                />
+                {errors.password && <span className="text-red-500">{errors.password.message}</span>}
+            </div>
+
+            <DialogFooter className="sm:justify-start">
+                <Button type="submit" className="w-full bg-red-600 text-white hover:bg-red-700">
+                    Entrar
+                </Button>
+            </DialogFooter>
+        </form>
+    );
+}
+
+const RegisterForm = ({ onClose }: any) => {
+    const { watch, handleSubmit, register, formState: { errors } } = useForm<RegisterFormData>();
+    const [errorMessage, setErrorMessage] = React.useState<string>('');
+
+    const handleRegister: SubmitHandler<RegisterFormData> = async (data) => {
         if (data.password !== data.confirmPassword) {
-            alert('As senhas não coincidem');
+            setErrorMessage('As senhas não coincidem');
             return;
         }
-        // Lógica para cadastro (se necessário)
-        console.log('Cadastro com', data.name, data.email, data.password);
-        onClose(); // Fechar o modal após o cadastro
+
+        try {
+            const response = await fetch('/api/user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: data.name,
+                    email: data.email,
+                    password: data.password,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao registrar o usuário');
+            }
+
+            onClose(); // Fechar o modal após o sucesso
+        } catch (error) {
+            setErrorMessage('Ocorreu um erro ao registrar o usuário. Tente novamente.');
+        }
     };
+
+    return (
+        <form onSubmit={handleSubmit(handleRegister)} className="space-y-4">
+            <div className="grid flex-1 gap-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input
+                    type="text"
+                    required
+                    placeholder="Seu nome"
+                    {...register('name', { required: 'O nome é obrigatório' })}
+                />
+                {errors.name && <span className="text-red-500">{errors.name.message}</span>}
+            </div>
+            <div className="grid flex-1 gap-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                    type="email"
+                    required
+                    placeholder="seu.email@exemplo.com"
+                    {...register('email', {
+                        required: 'O email é obrigatório',
+                        pattern: {
+                            value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+                            message: 'Email inválido',
+                        },
+                    })}
+                />
+                {errors.email && <span className="text-red-500">{errors.email.message}</span>}
+            </div>
+            <div className="grid flex-1 gap-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                    type="password"
+                    required
+                    placeholder="Sua senha"
+                    {...register('password', { required: 'A senha é obrigatória' })}
+                />
+                {errors.password && <span className="text-red-500">{errors.password.message}</span>}
+            </div>
+            <div className="grid flex-1 gap-2">
+                <Label htmlFor="confirmPassword">Confirme a Senha</Label>
+                <Input
+                    type="password"
+                    required
+                    placeholder="Confirme sua senha"
+                    {...register('confirmPassword', {
+                        required: 'A confirmação da senha é obrigatória',
+                        validate: (value) =>
+                            value === watch('password') || 'As senhas não coincidem',
+                    })}
+                />
+                {errors.confirmPassword && <span className="text-red-500">{errors.confirmPassword.message}</span>}
+            </div>
+
+            {errorMessage && <span className="text-red-500">{errorMessage}</span>}
+
+            <DialogFooter className="sm:justify-start">
+                <Button type="submit" className="w-full bg-red-600 text-white hover:bg-red-700">
+                    Cadastrar
+                </Button>
+            </DialogFooter>
+        </form>
+    );
+}
+
+export const LoginDialog = ({ isOpen, onClose }: any) => {
+    const [isRegistering, setIsRegistering] = React.useState(false);
 
     React.useEffect(() => {
         if (!isOpen) {
-            setIsRegistering(false); // Resetar para login ao fechar o modal
-            // setFormData({
-            //     email: '',
-            //     password: '',
-            //     confirmPassword: '',
-            //     name: '',
-            // });
+            setIsRegistering(false);
         }
     }, [isOpen]);
 
@@ -68,123 +193,7 @@ export const LoginDialog = ({ isOpen, onClose }: any) => {
                     </DialogDescription>
                 </DialogHeader>
 
-                <form
-                    onSubmit={handleSubmit(handleLogin)}
-                    className="space-y-4"
-                >
-                    {/* Formulário de Login */}
-                    {!isRegistering && (
-                        <>
-                            <div className="grid flex-1 gap-2" tabIndex={1}>
-                                <Label htmlFor="email">E-mail</Label>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    required
-                                    placeholder="seu.email@exemplo.com"
-
-                                    {...register('email', {
-                                        required: 'O email é obrigatório',
-                                        pattern: {
-                                            value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-                                            message: 'Email inválido',
-                                        },
-                                    })}
-                                />
-                                {errors.email && <span className="text-red-500">{errors.email.message}</span>}
-                            </div>
-                            <div className="grid flex-1 gap-2">
-                                <Label htmlFor="password">Senha</Label>
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    placeholder="Sua senha"
-                                    {...register('password', { required: 'A senha é obrigatória' })}
-                                />
-                                {errors.password && <span className="text-red-500">{errors.password.message}</span>}
-                            </div>
-                        </>
-                    )}
-
-                    {/* Formulário de Cadastro */}
-                    {/* {isRegistering && (
-                        <>
-                            <div className="grid flex-1 gap-2" tabIndex={1}>
-                                <Label htmlFor="name">Nome</Label>
-                                <Input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    required
-                                    placeholder="Seu nome"
-                                    {...register('name', { required: 'O nome é obrigatório' })}
-                                />
-                                {errors.name && <span className="text-red-500">{errors.name.message}</span>}
-                            </div>
-                            <div className="grid flex-1 gap-2">
-                                <Label htmlFor="email">E-mail</Label>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    required
-                                    placeholder="seu.email@exemplo.com"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    {...registerRegister('email', {
-                                        required: 'O email é obrigatório',
-                                        pattern: {
-                                            value: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-                                            message: 'Email inválido',
-                                        },
-                                    })}
-                                />
-                                {registerErrors.email && <span className="text-red-500">{registerErrors.email.message}</span>}
-                            </div>
-                            <div className="grid flex-1 gap-2">
-                                <Label htmlFor="password">Senha</Label>
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    placeholder="Sua senha"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    {...registerRegister('password', { required: 'A senha é obrigatória' })}
-                                />
-                                {registerErrors.password && <span className="text-red-500">{registerErrors.password.message}</span>}
-                            </div>
-                            <div className="grid flex-1 gap-2">
-                                <Label htmlFor="confirm-password">Confirme a Senha</Label>
-                                <Input
-                                    id="confirm-password"
-                                    name="confirmPassword"
-                                    type="password"
-                                    required
-                                    placeholder="Confirme sua senha"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    {...registerRegister('confirmPassword', {
-                                        required: 'A confirmação da senha é obrigatória',
-                                        validate: (value) =>
-                                            value === formData.password || 'As senhas não coincidem',
-                                    })}
-                                />
-                                {registerErrors.confirmPassword && <span className="text-red-500">{registerErrors.confirmPassword.message}</span>}
-                            </div>
-                        </>
-                    )} */}
-
-                    <DialogFooter className="sm:justify-start">
-                        <Button type="submit" className="w-full bg-red-600 text-white hover:bg-red-700">
-                            {isRegistering ? 'Cadastrar' : 'Entrar'}
-                        </Button>
-                    </DialogFooter>
-                </form>
+                {isRegistering ? <RegisterForm onClose={onClose} /> : <LoginForm onClose={onClose} />}
 
                 <div className="mt-4 text-center">
                     {isRegistering ? (
