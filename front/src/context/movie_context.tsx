@@ -23,8 +23,9 @@ interface MovieContextProps {
     handleSubmit: any;
     register: UseFormRegister<FieldValues>;
     control: any,
-    onSubmit: SubmitHandler<FilterFormData>; 
-    errors: any; 
+    onSubmit: SubmitHandler<FilterFormData>;
+    errors: any;
+    filterClear: () => void
 }
 
 interface MovieProviderProps {
@@ -45,7 +46,7 @@ const buildQueryString = (params: GetMovieByFilterParams): string => {
 };
 
 export const MovieProvider = ({ children }: MovieProviderProps) => {
-    const { register,control, handleSubmit, formState: { errors } } = useForm<FilterFormData>(); // Usando React Hook Form
+    const { register, control, handleSubmit, formState: { errors }, reset } = useForm<FilterFormData>(); // Usando React Hook Form
 
     const [filters, setFilters] = React.useState<GetMovieByFilterParams>({});
 
@@ -58,7 +59,7 @@ export const MovieProvider = ({ children }: MovieProviderProps) => {
         };
 
         console.log('filterParams', filterParams)
-        setFilters(filterParams); 
+        setFilters(filterParams);
     };
 
     const filteredMoviesUrl = (params: GetMovieByFilterParams) => {
@@ -88,6 +89,11 @@ export const MovieProvider = ({ children }: MovieProviderProps) => {
     const loading = loadingGenres || loadingAlphabetical || loadingHighestRated || loadingLastReviewed || loadingLatest;
     const error = errorGenres || errorAlphabetical || errorHighestRated || errorLastReviewed || errorLatest;
 
+    const filterClear = () => {
+        reset();
+        setFilters({});
+    }
+
     const value = {
         genreOptions,
         alphabetical,
@@ -101,6 +107,7 @@ export const MovieProvider = ({ children }: MovieProviderProps) => {
         control,
         onSubmit,
         errors,
+        filterClear
     };
 
     return <MovieContext.Provider value={value}>{children}</MovieContext.Provider>;

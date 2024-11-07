@@ -1,5 +1,6 @@
 import React from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form'; // Importando useForm do React Hook Form
+import { toast } from 'react-toastify'; // Importando a função toast
 import {
     Dialog,
     DialogContent,
@@ -29,8 +30,13 @@ const LoginForm = ({ onClose }: any) => {
     const { login, handleSubmit, errors, register } = useAuthContext(); // Consumindo o contexto de autenticação
 
     const handleLogin: SubmitHandler<LoginFormData> = async (data) => {
-        await login(data.email, data.password); // Usando a função de login do contexto
-        onClose(); // Fechar o modal após o login
+        try {
+            await login(data.email, data.password); // Usando a função de login do contexto
+            toast.success('Login realizado com sucesso!'); // Exibindo sucesso
+            onClose(); // Fechar o modal após o login
+        } catch (error) {
+            toast.error('Erro ao realizar login. Verifique suas credenciais.'); // Exibindo erro
+        }
     };
 
     return (
@@ -102,9 +108,10 @@ const RegisterForm = ({ onClose }: any) => {
                 throw new Error('Erro ao registrar o usuário');
             }
 
+            toast.success('Cadastro realizado com sucesso!'); // Exibindo sucesso
             onClose(); // Fechar o modal após o sucesso
         } catch (error) {
-            setErrorMessage('Ocorreu um erro ao registrar o usuário. Tente novamente.');
+            toast.error('Ocorreu um erro ao registrar o usuário. Tente novamente.'); // Exibindo erro
         }
     };
 

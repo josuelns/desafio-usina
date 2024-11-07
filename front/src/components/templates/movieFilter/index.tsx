@@ -1,5 +1,5 @@
 import { useMovieContext } from '@/context/movie_context';
-
+import { toast } from 'react-toastify'; // Importando toast
 import {
     Dialog,
     DialogContent,
@@ -15,10 +15,25 @@ import { Button } from "@/components/atoms/button";
 import { Controller } from 'react-hook-form';
 
 export const MovieFilterDialog = ({ isOpen, onClose }: any) => {
-    const { genreOptions, loading, error, onSubmit, handleSubmit, register, control, errors } = useMovieContext();
+    const { genreOptions, loading, onSubmit, handleSubmit, register, control, errors, filterClear } = useMovieContext();
 
     if (loading) return <div>Carregando...</div>;
 
+    const handleFormSubmit = async (data: any) => {
+        try {
+            // Enviar o formulário com sucesso
+            await onSubmit(data); // Supondo que onSubmit seja uma função assíncrona
+            toast.success('Filtro criado com sucesso!'); // Exibe o toast de sucesso
+            onClose(); // Fecha o modal
+        } catch (error) {
+            toast.error('Erro ao criar filtro. Tente novamente!'); // Exibe o toast de erro
+        }
+    };
+
+    const handleClearFilter = () => {
+        filterClear();
+        onClose();
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -33,8 +48,7 @@ export const MovieFilterDialog = ({ isOpen, onClose }: any) => {
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        handleSubmit(onSubmit)();
-                        onClose()
+                        handleSubmit(handleFormSubmit)();
                     }}
                     className="space-y-4"
                 >
@@ -118,7 +132,10 @@ export const MovieFilterDialog = ({ isOpen, onClose }: any) => {
                         </div>
                     </div>
 
-                    <DialogFooter className="sm:justify-start">
+                    <DialogFooter className="sm:justify-between">
+                        <Button type="button" className="w-full bg-transparent border border-red-600 text-red-600 hover:bg-red-700 hover:text-white" onClick={handleClearFilter}>
+                            limpar Filtro
+                        </Button>
                         <Button type="submit" className="w-full bg-red-600 text-white hover:bg-red-700">
                             Criar Filtro
                         </Button>
