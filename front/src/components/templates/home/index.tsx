@@ -34,13 +34,17 @@ const HomeTemplate: React.FC<HomeTemplateProps> = ({
             <HeroSection
                 openLoginModal={openLoginModal}
                 openFilterModal={openFilterModal}
-                isAuthenticate={isAuthenticated} openAccountAvaliationModal={function (state: object): void {
-                    throw new Error("Function not implemented.");
-                }} openAccountMoviesModal={function (state: object): void {
-                    throw new Error("Function not implemented.");
-                }} openMoviesCreateModal={function (state: object): void {
-                    throw new Error("Function not implemented.");
-                }} logout={logout} user={user?.name ?? 'User'} />
+                isAuthenticate={isAuthenticated} 
+                openAccountAvaliationModal={() => {
+
+                }} 
+                openAccountMoviesModal={() => {
+
+                }} 
+                openMoviesCreateModal={() => {}} 
+                logout={logout} 
+                user={user?.name ?? 'User'} 
+            />
             <ListPill genres={genreOptions ?? []} />
             <div className="px-4">
                 <div className="pb-10 pt-5 px-4">

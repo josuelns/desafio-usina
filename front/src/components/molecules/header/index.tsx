@@ -39,7 +39,7 @@ export const Header = ({
                             Conta
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="bg-white text-gray-700 rounded-md shadow-lg mt-2 w-48 -ml-4" asChild>
+                    <DropdownMenuContent className="bg-white text-gray-700 rounded-md shadow-lg mt-2 w-48 -ml-4" >
                         <DropdownMenuLabel className="font-bold px-4 py-2">{user}</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
