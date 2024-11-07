@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS reviews (
     CONSTRAINT fk_movie FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE, 
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,  
     rating INT NOT NULL, 
-    comment VARCHAR(255) 
+    comment VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Rollback
