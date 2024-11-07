@@ -1,3 +1,4 @@
+import { QueryResult } from 'pg';
 import {
   IMovies,
   CreateMovieParams,
@@ -96,8 +97,8 @@ export const getMovieById = async ({ id }: GetMovieByIdParams): Promise<IMovies 
       m.release_year,
       m.duration,
       m.thumb,
-      COALESCE(r.weighted_average, 0) AS average, 
-      r.total_users,
+      COALESCE(SUM(r.rating) / NULLIF(COUNT(DISTINCT r.user_id), 0), 0) AS average,  -- Média ponderada
+      COUNT(DISTINCT r.user_id) AS total_users,  -- Número de usuários únicos que avaliaram
       g.name AS genre_name,
       m.created_at,
       m.updated_at
@@ -108,7 +109,9 @@ export const getMovieById = async ({ id }: GetMovieByIdParams): Promise<IMovies 
     LEFT JOIN 
       genres g ON m.id_genre = g.id  
     WHERE 
-      m.id = $1
+      m.id = $1  
+    GROUP BY 
+      m.id, g.name  
   `, [id]);
 
   return result.rows[0] || null;
@@ -122,12 +125,11 @@ export const getMovieByFilter = async ({
   min_rating,
   max_rating,
   id_user,
-  order
-}: GetMovieByFilterParams): Promise<(IMovies & { user: IUsers })[] | null> => {
+  order,
+}: GetMovieByFilterParams): Promise<(Partial<IMovies> & { user: Partial<IUsers> })[] | null> => {
   const sortOption = order || MovieSortOption.LATEST; // Default to 'LATEST' if no order is specified
+  const sortQuery = buildSortQuery(sortOption);  // Função externa para criar a string de ordenação
 
-  const sortQuery = buildSortQuery(sortOption); // Generate the correct sort query based on the option
-  
   let queryText = `
     SELECT 
       m.id,
@@ -139,8 +141,8 @@ export const getMovieByFilter = async ({
       m.created_at,
       m.updated_at,
       g.name AS genre_name,
-      COALESCE(SUM(r.rating * r.total_users) / NULLIF(SUM(r.total_users), 0), 0) AS weighted_average, 
-      SUM(r.total_users) AS total_users,
+      COALESCE(SUM(r.rating) / NULLIF(COUNT(DISTINCT r.user_id), 0), 0) AS average,  -- Média ponderada
+      COUNT(DISTINCT r.user_id) AS total_users,  -- Número de usuários únicos que avaliaram
       u.id AS user_id,
       u.name AS user_name,
       u.email AS user_email,
@@ -156,78 +158,68 @@ export const getMovieByFilter = async ({
     LEFT JOIN
       users u ON m.id_user = u.id 
     WHERE 1 = 1
-    ${sortQuery} -
   `;
 
-  const values: any[] = [];
+  const values: (string | number)[] = [];  // Tipagem correta para os valores
   let index = 1;
 
-  if (id) {
-    queryText += ` AND m.id = $${index++}`;
-    values.push(id);
-  }
+  // Função para adicionar filtros de forma dinâmica
+  const addFilter = (condition: string, value: string | number) => {
+    queryText += ` AND ${condition}`;
+    values.push(value);
+    index++;
+  };
 
-  if (title) {
-    queryText += ` AND m.title ILIKE $${index++}`; // Case-insensitive search for title
-    values.push(`%${title}%`);
-  }
+  // Aplicando filtros dinamicamente
+  if (id) addFilter('m.id = $' + index, id);
+  if (title) addFilter('m.title ILIKE $' + index, `%${title}%`);
+  if (release_year) addFilter('m.release_year = $' + index, release_year);
+  if (id_genre) addFilter('g.id = $' + index, id_genre);
+  if (min_rating) addFilter('r.rating >= $' + index, min_rating);
+  if (max_rating) addFilter('r.rating <= $' + index, max_rating);
+  if (id_user) addFilter('m.id_user = $' + index, id_user);
 
-  if (release_year) {
-    queryText += ` AND m.release_year = $${index++}`;
-    values.push(release_year);
-  }
+  // A cláusula GROUP BY precisa incluir todas as colunas de movies e users que não são agregadas
+  queryText += ` GROUP BY 
+    m.id, g.name, u.id 
+    ${sortQuery}
+  `;
 
-  if (id_genre) {
-    queryText += ` AND g.id = $${index++}`;
-    values.push(id_genre);
-  }
+  console.log(queryText)
 
-  if (min_rating) {
-    queryText += ` AND r.rating >= $${index++}`;
-    values.push(min_rating);
-  }
+  // Executando a consulta
+  const result: QueryResult<any> = await query(queryText, values);
 
-  if (max_rating) {
-    queryText += ` AND r.rating <= $${index++}`;
-    values.push(max_rating);
-  }
-
-  if (id_user) {
-    queryText += ` AND m.id_user = $${index++}`;
-    values.push(id_user);
-  }
-
-  queryText += ` GROUP BY m.id, g.name, u.id`;
-
-  const result = await query(queryText, values);
-
+  // Se houver resultados, mapeamos
   if (result.rows.length > 0) {
-    return result.rows.map(row => ({
-      ...row,
-      user: {
-        id: row.user_id,
-        name: row.user_name,
-        email: row.user_email,
-        thumb: row.user_thumb,
-        created_at: row.user_created_at,
-        updated_at: row.user_updated_at
-      },
+    return result.rows.map((row) => ({
       id: row.id,
       title: row.title,
       description: row.description,
       release_year: row.release_year,
       duration: row.duration,
       thumb: row.thumb,
-      weighted_average: row.weighted_average,
+      weighted_average: row.average,  // Ajuste para usar o campo 'average' calculado no SELECT
       total_users: row.total_users,
       genre_name: row.genre_name,
       created_at: row.created_at,
-      updated_at: row.updated_at
+      updated_at: row.updated_at,
+      id_genre: row.id_genre,  // Adicionando o campo id_genre ao resultado
+      id_user: row.id_user,    // Adicionando o campo id_user ao resultado
+      user: {
+        id: row.user_id,
+        name: row.user_name,
+        email: row.user_email,
+        thumb: row.user_thumb,
+        created_at: row.user_created_at,
+        updated_at: row.user_updated_at,
+      },
     }));
   }
 
   return null;
 };
+
 
 export const createMovie = async ({
   title,

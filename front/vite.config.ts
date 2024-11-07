@@ -13,4 +13,13 @@ export default defineConfig({
       '@': path.resolve('./src'),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        rewrite: (path) => path, // Mantém o prefixo '/api' nas requisições
+      },
+    },
+  },
 });

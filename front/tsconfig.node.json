@@ -5,7 +5,7 @@
     /** 跳过所有声明文件的类型检查，减少编译时间 */
     "skipLibCheck": true,
     /** 指定模块系统为 ESNext，用于支持现代的 ES 模块 */
-    "module": "ESNext",
+    "module": "ES2022",
     /** 使用 Bundler（如 Vite、Webpack）解析模块 */
     "moduleResolution": "Bundler",
     /** 允许从没有默认导出的模块中进行默认导入，方便处理不符合 ES 标准的模块 */

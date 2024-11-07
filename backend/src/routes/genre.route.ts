@@ -36,7 +36,7 @@ const router = Router();
  *       500:
  *         description: Erro no servidor.
  */
-router.get('/', authenticateJWT, genreController.getAllGenres);
+router.get('/', genreController.getAllGenres);
 
 /**
  * @swagger
@@ -76,7 +76,7 @@ router.get('/', authenticateJWT, genreController.getAllGenres);
  *       500:
  *         description: Erro no servidor.
  */
-router.get('/:id', authenticateJWT, genreController.getGenreById);
+router.get('/:id', genreController.getGenreById);
 
 /**
  * @swagger
@@ -108,7 +108,7 @@ router.get('/:id', authenticateJWT, genreController.getGenreById);
  *       500:
  *         description: Erro no servidor.
  */
-router.post('/', authenticateJWT, genreController.createGenre);
+router.post('/',authenticateJWT, genreController.createGenre);
 
 /**
  * @swagger

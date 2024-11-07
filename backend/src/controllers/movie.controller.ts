@@ -43,8 +43,9 @@ export const getAllMoviesByFilter = async (req: Request, res: Response): Promise
         min_rating: req.query.min_rating ? Number(req.query.min_rating) : undefined,
         max_rating: req.query.max_rating ? Number(req.query.max_rating) : undefined,
         id_user: req.query.id_user ? Number(req.query.id_user) : undefined,
-        order:req.params.order as MovieSortOption
+        order:req.query.order as MovieSortOption
     };
+
 
     try {
         const movies = await movieModel.getMovieByFilter(filterParams);
