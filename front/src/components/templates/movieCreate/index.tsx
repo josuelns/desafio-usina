@@ -1,7 +1,7 @@
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import axios from 'axios';
-import { toast } from 'react-toastify';  // Importando o Toast
+import { toast } from 'react-toastify'; 
 import { useAuthContext } from '@/context/auth_context';
 
 import { Button } from "@/components/atoms/button";
@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/atoms/select";
+import { IGenres } from '@/types/genre.type';
 
 export const MovieCreateDialog = ({ isOpen, onClose }: any) => {
     const { control, register, handleSubmit, formState: { errors }, reset } = useForm({
@@ -28,15 +29,15 @@ export const MovieCreateDialog = ({ isOpen, onClose }: any) => {
         }
     });
 
-    const { token } = useAuthContext(); // Consumindo o contexto de autenticação
-    const [genreOptions, setGenreOptions] = React.useState<any[]>([]); // Estado para armazenar os gêneros
-    const [loading, setLoading] = React.useState<boolean>(true); // Estado para controle de carregamento
+    const { token } = useAuthContext(); 
+    const [genreOptions, setGenreOptions] = React.useState<IGenres[]>([]); 
+    const [loading, setLoading] = React.useState<boolean>(true);
 
     React.useEffect(() => {
         const fetchGenres = async () => {
             try {
                 const response = await axios.get('http://localhost:3000/api/genre');
-                setGenreOptions(response.data); // Supondo que a resposta seja uma lista de gêneros
+                setGenreOptions(response.data);
             } catch (error) {
                 console.error('Erro ao carregar gêneros:', error);
                 toast.error('Erro ao carregar os gêneros.');
@@ -48,33 +49,30 @@ export const MovieCreateDialog = ({ isOpen, onClose }: any) => {
         fetchGenres();
     }, []);
 
-    // Lógica de submissão
     const onSubmit = async (data: any) => {
-        // Preparando os dados para envio conforme o schema CreateMovieParams
         const movieData = {
             title: data.title,
             description: data.description,
             release_year: data.releaseYear,
             duration: data.duration,
-            id_genre: data.genre, // Gênero selecionado
-            thumb: data.thumb || null, // Campo opcional, se não for preenchido será null
+            id_genre: data.genre,
+            thumb: data.thumb || null, 
         };
 
         try {
-            // Enviando os dados para a API com axios, incluindo o Bearer Token no cabeçalho
             const response = await axios.post(
                 'http://localhost:3000/api/movie',
                 movieData,
                 {
                     headers: {
-                        Authorization: `Bearer ${token}` // Adicionando o token no cabeçalho
+                        Authorization: `Bearer ${token}` 
                     }
                 }
             );
             console.log('Filme criado com sucesso:', response.data);
             toast.success('Filme criado com sucesso!');
-            reset(); // Limpa os campos do formulário após o envio
-            onClose(); // Fecha o modal
+            reset(); 
+            onClose(); 
         } catch (error) {
             console.error('Erro ao criar filme:', error);
             toast.error('Erro ao criar o filme.');
