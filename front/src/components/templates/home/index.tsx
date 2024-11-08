@@ -12,12 +12,18 @@ interface HomeTemplateProps {
     openDetailsModal: (movie: IMovies) => void;
     openLoginModal: (state: object) => void;
     openFilterModal: (state: object) => void;
+    openAccountAvaliationModal: (state: object) => void;
+    openAccountMoviesModal: (state: object) => void;
+    openMoviesCreateModal: (state: object) => void;
 }
 
 const HomeTemplate: React.FC<HomeTemplateProps> = ({
     openDetailsModal,
     openLoginModal,
-    openFilterModal
+    openFilterModal,
+    openAccountAvaliationModal,
+    openAccountMoviesModal,
+    openMoviesCreateModal
 }) => {
     const { isAuthenticated, user, logout, } = useAuthContext(); // Consumindo o contexto de autenticação
 
@@ -35,13 +41,9 @@ const HomeTemplate: React.FC<HomeTemplateProps> = ({
                 openLoginModal={openLoginModal}
                 openFilterModal={openFilterModal}
                 isAuthenticate={isAuthenticated} 
-                openAccountAvaliationModal={() => {
-
-                }} 
-                openAccountMoviesModal={() => {
-
-                }} 
-                openMoviesCreateModal={() => {}} 
+                openAccountAvaliationModal={openAccountAvaliationModal} 
+                openAccountMoviesModal={openAccountMoviesModal} 
+                openMoviesCreateModal={openMoviesCreateModal} 
                 logout={logout} 
                 user={user?.name ?? 'User'} 
             />
@@ -66,7 +68,7 @@ const HomeTemplate: React.FC<HomeTemplateProps> = ({
                         itemsPerPage={8}
                         openDetailsModal={openDetailsModal} />
                     <CardSection
-                        title="Últimos Comentados"
+                        title="Últimos Avaliados"
                         cards={last_reviewed ?? []}
                         itemsPerPage={4}
                         openDetailsModal={openDetailsModal}

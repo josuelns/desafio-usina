@@ -1,6 +1,8 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import axios from 'axios';
+import { toast } from 'react-toastify';  // Importando o Toast
+import { useAuthContext } from '@/context/auth_context';
 
 import { Button } from "@/components/atoms/button";
 import {
@@ -15,22 +17,18 @@ import { Input } from "@/components/atoms/input";
 import { Label } from "@/components/atoms/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/atoms/select";
 
-import './global.css';
-
 export const MovieCreateDialog = ({ isOpen, onClose }: any) => {
-    const { register, handleSubmit, formState: { errors }, watch, reset } = useForm({
+    const { control, register, handleSubmit, formState: { errors }, reset } = useForm({
         defaultValues: {
             genre: '',
             releaseYear: '',
             duration: '',
-            minRating: '',
-            maxRating: '',
             title: '',
-            description: '',
-            thumb: ''
+            description: ''
         }
     });
 
+    const { token } = useAuthContext(); // Consumindo o contexto de autenticação
     const [genreOptions, setGenreOptions] = React.useState<any[]>([]); // Estado para armazenar os gêneros
     const [loading, setLoading] = React.useState<boolean>(true); // Estado para controle de carregamento
 
@@ -41,6 +39,7 @@ export const MovieCreateDialog = ({ isOpen, onClose }: any) => {
                 setGenreOptions(response.data); // Supondo que a resposta seja uma lista de gêneros
             } catch (error) {
                 console.error('Erro ao carregar gêneros:', error);
+                toast.error('Erro ao carregar os gêneros.');
             } finally {
                 setLoading(false);
             }
@@ -51,38 +50,44 @@ export const MovieCreateDialog = ({ isOpen, onClose }: any) => {
 
     // Lógica de submissão
     const onSubmit = async (data: any) => {
-        // Preparando os dados para envio
+        // Preparando os dados para envio conforme o schema CreateMovieParams
         const movieData = {
             title: data.title,
             description: data.description,
             release_year: data.releaseYear,
             duration: data.duration,
             id_genre: data.genre, // Gênero selecionado
-            thumb: data.thumb,  // Thumbnail (caso tenha)
+            thumb: data.thumb || null, // Campo opcional, se não for preenchido será null
         };
 
         try {
-            // Enviando os dados para a API com axios
-            const response = await axios.post('http://localhost:3000/api/movie', movieData);
+            // Enviando os dados para a API com axios, incluindo o Bearer Token no cabeçalho
+            const response = await axios.post(
+                'http://localhost:3000/api/movie',
+                movieData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}` // Adicionando o token no cabeçalho
+                    }
+                }
+            );
             console.log('Filme criado com sucesso:', response.data);
+            toast.success('Filme criado com sucesso!');
             reset(); // Limpa os campos do formulário após o envio
             onClose(); // Fecha o modal
         } catch (error) {
             console.error('Erro ao criar filme:', error);
+            toast.error('Erro ao criar o filme.');
         }
     };
-
-    // Obter o valor de minRating e maxRating para validar que minRating <= maxRating
-    const minRating = watch('minRating');
-    const maxRating = watch('maxRating');
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Criar Filtro</DialogTitle>
+                    <DialogTitle>Criar Filme</DialogTitle>
                     <DialogDescription>
-                        Preencha os campos abaixo para criar um filtro.
+                        Preencha os campos abaixo para criar um filme.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -112,18 +117,27 @@ export const MovieCreateDialog = ({ isOpen, onClose }: any) => {
                         {loading ? (
                             <div>Carregando gêneros...</div>
                         ) : (
-                            <Select {...register('genre', { required: 'Gênero é obrigatório' })}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione um gênero" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {genreOptions.map((genre) => (
-                                        <SelectItem key={genre.id} value={genre.id}>
-                                            {genre.name} {/* Supondo que o objeto de gênero tenha as propriedades `id` e `name` */}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Controller
+                                name="genre"
+                                control={control}
+                                render={({ field }) => (
+                                    <Select
+                                        value={field.value}
+                                        onValueChange={field.onChange} // Usando onValueChange do ShadCN
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecione um gênero" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {genreOptions?.map((g) => (
+                                                <SelectItem key={g.id} value={g.id.toString()}>
+                                                    {g.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            />
                         )}
                         {errors.genre && <span className="text-red-500 text-sm">{errors.genre.message}</span>}
                     </div>
@@ -150,71 +164,9 @@ export const MovieCreateDialog = ({ isOpen, onClose }: any) => {
                         {errors.duration && <span className="text-red-500 text-sm">{errors.duration.message}</span>}
                     </div>
 
-                    <div className='flex gap-2'>
-                        <div className="grid flex-1 gap-2">
-                            <Label htmlFor="minRating">Avaliação Mínima</Label>
-                            <Input
-                                id="minRating"
-                                type="number"
-                                {...register('minRating', {
-                                    required: 'Avaliação mínima é obrigatória',
-                                    min: {
-                                        value: 0,
-                                        message: 'Avaliação mínima deve ser entre 0 e 5',
-                                    },
-                                    max: {
-                                        value: 5,
-                                        message: 'Avaliação mínima deve ser entre 0 e 5',
-                                    },
-                                })}
-                                placeholder="Média mínima"
-                            />
-                            {errors.minRating && <span className="text-red-500 text-sm">{errors.minRating.message}</span>}
-                        </div>
-
-                        <div className="grid flex-1 gap-2">
-                            <Label htmlFor="maxRating">Avaliação Máxima</Label>
-                            <Input
-                                id="maxRating"
-                                type="number"
-                                {...register('maxRating', {
-                                    required: 'Avaliação máxima é obrigatória',
-                                    min: {
-                                        value: 0,
-                                        message: 'Avaliação máxima deve ser entre 0 e 5',
-                                    },
-                                    max: {
-                                        value: 5,
-                                        message: 'Avaliação máxima deve ser entre 0 e 5',
-                                    },
-                                    validate: {
-                                        // Validar se minRating <= maxRating
-                                        maxRatingValidation: (value) => {
-                                            if (minRating && value < minRating) {
-                                                return 'Avaliação máxima não pode ser menor que a avaliação mínima';
-                                            }
-                                            return true;
-                                        }
-                                    }
-                                })}
-                                placeholder="Média máxima"
-                            />
-                            {errors.maxRating && <span className="text-red-500 text-sm">{errors.maxRating.message}</span>}
-                        </div>
-                    </div>
-
-                    <div className="grid flex-1 gap-2">
-                        <Label htmlFor="thumb">Thumbnail (URL)</Label>
-                        <Input
-                            id="thumb"
-                            {...register('thumb')}
-                            placeholder="URL da thumbnail (opcional)"
-                        />
-                    </div>
-
                     <DialogFooter className="sm:justify-start">
                         <Button type="submit" className="w-full bg-red-600 text-white hover:bg-red-700">
-                            Criar Filtro
+                            Criar Filme
                         </Button>
                     </DialogFooter>
                 </form>
